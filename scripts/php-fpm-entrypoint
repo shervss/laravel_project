@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+chmod a+x ./artisan
+
+mkdir -p storage/framework/cache/data
+mkdir -p storage/framework/sessions
+mkdir -p storage/framework/views
+mkdir -p bootstrap/cache
+
+chmod -R 777 storage bootstrap/cache
+
+export TMPDIR=/usr/share/nginx/html/storage/framework/cache/data
+
+php artisan storage:link || true
+
+exec docker-php-entrypoint "$@"
