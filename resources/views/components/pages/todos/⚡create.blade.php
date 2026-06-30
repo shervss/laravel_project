@@ -9,5 +9,5 @@ new class extends Component
 ?>
 
 <div>
-    {{-- Because you are alive, everything is possible. - Thich Nhat Hanh --}}
+    <h1>Create Todo Page</h1>
 </div>
