@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/usr/share/nginx/html:delegated
+      - storage-data:/usr/share/nginx/html/storage
+      - cache-data:/usr/share/nginx/html/bootstrap/cache
+
+  nginx:
+    image: nginx:1-alpine
+    container_name: laravel_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    volumes:
+      - .:/usr/share/nginx/html:delegated
+      - storage-data:/usr/share/nginx/html/storage
+      - cache-data:/usr/share/nginx/html/bootstrap/cache
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+
+  db:
+    image: mysql:8.0
+    container_name: laravel_mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: laravel_project
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  db-data:
+  storage-data:
+  cache-data:
