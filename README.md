@@ -1,58 +1,326 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# laravel_project
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 13 learning project built with Docker, Livewire, Spatie Roles and Permissions, and Spatie Activity Logs.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.5
+- Laravel 13
+- Livewire 4
+- MySQL 8
+- Redis
+- Laravel Horizon
+- Laravel Reverb
+- Docker Compose
+- Spatie Laravel Permission
+- Spatie Laravel Activitylog
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Dockerized Laravel development environment
+- Livewire Todo pages
+- Spatie Roles and Permissions with teams enabled
+- Role and permission enums
+- Protected routes using permission middleware
+- Spatie Activity Log setup
+- Advanced Todo activity logging with old/new attribute tracking
+- Activity Logs page
+- Temporary local dev login route for testing protected pages
 
-## Learning Laravel
+## Requirements
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- WSL
+- Docker Desktop
+- Git
+- Composer
+- Node.js and npm
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Clone the repository:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone <repository-url>
+cd mangulabnan_cliqueha
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Copy the environment file:
 
-## Contributing
+```bash
+cp .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Install PHP dependencies:
 
-## Code of Conduct
+```bash
+composer install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Install JavaScript dependencies:
 
-## Security Vulnerabilities
+```bash
+npm install
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Start Docker containers:
 
-## License
+```bash
+docker compose up -d --build
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Generate the Laravel app key:
+
+```bash
+docker compose exec app php artisan key:generate
+```
+
+Run migrations and seeders:
+
+```bash
+docker compose exec app php artisan migrate:fresh --seed --force
+```
+
+Clear cached files:
+
+```bash
+docker compose exec app php artisan optimize:clear
+```
+
+## Application URLs
+
+Use this URL for the Laravel app:
+
+```text
+http://127.0.0.1
+```
+
+Important local ports:
+
+```text
+Laravel/Nginx: http://127.0.0.1
+MySQL: 127.0.0.1:3307
+Redis: 127.0.0.1:6379
+Reverb: 127.0.0.1:8080
+```
+
+Note: If `localhost` shows an Apache default page, use `127.0.0.1` instead.
+
+## Test User
+
+The seeder creates a test user:
+
+```text
+Email: test@example.com
+Password: password
+Role: super admin
+Team ID: 1
+```
+
+## Dev Login
+
+A temporary local dev login route is available for testing protected pages:
+
+```text
+http://127.0.0.1/dev-login
+```
+
+This route logs in `test@example.com`, sets the Spatie team context to `1`, and redirects to the Activity Logs page.
+
+## Main Routes
+
+```text
+/                       Welcome page
+/todos                  Todo index
+/todos/create           Create Todo page
+/todos/{todo}           View Todo page
+/todos/{todo}/edit      Edit Todo page
+/todos/{todo}/delete    Delete Todo page
+/activity-logs          Activity Logs page
+/dev-login              Temporary local test login
+```
+
+## Spatie Roles and Permissions
+
+The project uses Spatie Laravel Permission with teams enabled.
+
+Roles:
+
+```text
+super admin
+admin
+user
+```
+
+Permissions:
+
+```text
+view todos
+create todos
+update todos
+delete todos
+view activity logs
+```
+
+Permission checks use enums:
+
+```php
+$user->can(\App\Enums\PermissionEnum::VIEW_TODOS->value);
+```
+
+When using teams, set the team context:
+
+```php
+setPermissionsTeamId(1);
+```
+
+## Spatie Activity Logs
+
+The `Todo` model logs selected attributes:
+
+```text
+title
+description
+completed
+```
+
+Activity logs track:
+
+- Created events
+- Updated events
+- Deleted events
+- Old and new attribute values
+
+Example Tinker check:
+
+```bash
+docker compose exec app php artisan tinker
+```
+
+```php
+$todo = \App\Models\Todo::create([
+    'title' => 'Original name',
+    'description' => 'Lorem',
+    'completed' => false,
+]);
+
+$todo->update([
+    'title' => 'Updated name',
+    'completed' => true,
+]);
+
+$activity = \Spatie\Activitylog\Models\Activity::where('event', 'updated')->latest()->first();
+
+$activity->attribute_changes->toArray();
+```
+
+Expected result:
+
+```php
+[
+    'old' => [
+        'title' => 'Original name',
+        'completed' => false,
+    ],
+    'attributes' => [
+        'title' => 'Updated name',
+        'completed' => true,
+    ],
+]
+```
+
+## Useful Commands
+
+Start containers:
+
+```bash
+docker compose up -d
+```
+
+Stop containers:
+
+```bash
+docker compose down
+```
+
+Run migrations and seeders:
+
+```bash
+docker compose exec app php artisan migrate:fresh --seed --force
+```
+
+Clear cache:
+
+```bash
+docker compose exec app php artisan optimize:clear
+```
+
+Reset permission cache:
+
+```bash
+docker compose exec app php artisan permission:cache-reset
+```
+
+Open Tinker:
+
+```bash
+docker compose exec app php artisan tinker
+```
+
+View routes:
+
+```bash
+docker compose exec app php artisan route:list
+```
+
+Run tests:
+
+```bash
+docker compose exec app php artisan test
+```
+
+## Git Workflow
+
+Branch naming standard:
+
+```text
+feature/SM-description
+bugfix/SM-description
+hotfix/SM-description
+```
+
+Example branch:
+
+```bash
+git checkout -b feature/SM-spatie-roles-permissions-activity-logs
+```
+
+Commit naming standard:
+
+```text
+feat: new feature
+fix: bug fix
+chore: config or maintenance
+docs: documentation only
+refactor: code change without feature or bug fix
+test: adding or fixing tests
+```
+
+Example commit:
+
+```bash
+git commit -m "feat: add spatie roles permissions and activity logs"
+```
+
+Push branch:
+
+```bash
+git push -u origin feature/SM-spatie-roles-permissions-activity-logs
+```
+
+## Notes
+
+- Use `127.0.0.1` for browser testing.
+- `localhost` may point to Apache depending on the local machine setup.
+- The `/dev-login` route is only for local development/testing.
+- Do not commit `.env`.
+- Remove accidental local files before committing.
