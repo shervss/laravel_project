@@ -2,6 +2,18 @@
 
 A Laravel 13 learning project built with Docker, Livewire, Spatie Roles and Permissions, and Spatie Activity Logs.
 
+## Features
+
+- Dockerized Laravel development environment
+- Livewire-powered Todo pages
+- Spatie Roles and Permissions with teams enabled
+- Role and permission enums for cleaner access control
+- Permission-protected routes
+- Spatie Activity Log integration
+- Advanced Todo activity logging with old/new value tracking
+- Activity Logs page for viewing recorded model changes
+- Temporary local dev login route for testing protected pages
+
 ## Tech Stack
 
 - PHP 8.5
@@ -12,66 +24,17 @@ A Laravel 13 learning project built with Docker, Livewire, Spatie Roles and Perm
 - Laravel Horizon
 - Laravel Reverb
 - Docker Compose
+- Nginx
+- PHP-FPM
 - Spatie Laravel Permission
 - Spatie Laravel Activitylog
 
-## Features
+## Quick Start
 
-- Dockerized Laravel development environment
-- Livewire Todo pages
-- Spatie Roles and Permissions with teams enabled
-- Role and permission enums
-- Protected routes using permission middleware
-- Spatie Activity Log setup
-- Advanced Todo activity logging with old/new attribute tracking
-- Activity Logs page
-- Temporary local dev login route for testing protected pages
-
-## Requirements
-
-- WSL
-- Docker Desktop
-- Git
-- Composer
-- Node.js and npm
-
-## Installation
-
-Clone the repository:
+Start the Docker containers:
 
 ```bash
-git clone <repository-url>
-cd mangulabnan_cliqueha
-```
-
-Copy the environment file:
-
-```bash
-cp .env.example .env
-```
-
-Install PHP dependencies:
-
-```bash
-composer install
-```
-
-Install JavaScript dependencies:
-
-```bash
-npm install
-```
-
-Start Docker containers:
-
-```bash
-docker compose up -d --build
-```
-
-Generate the Laravel app key:
-
-```bash
-docker compose exec app php artisan key:generate
+docker compose up -d
 ```
 
 Run migrations and seeders:
@@ -86,146 +49,58 @@ Clear cached files:
 docker compose exec app php artisan optimize:clear
 ```
 
-## Application URLs
-
-Use this URL for the Laravel app:
+Open the application:
 
 ```text
 http://127.0.0.1
 ```
 
-Important local ports:
-
-```text
-Laravel/Nginx: http://127.0.0.1
-MySQL: 127.0.0.1:3307
-Redis: 127.0.0.1:6379
-Reverb: 127.0.0.1:8080
-```
-
-Note: If `localhost` shows an Apache default page, use `127.0.0.1` instead.
-
-## Test User
-
-The seeder creates a test user:
-
-```text
-Email: test@example.com
-Password: password
-Role: super admin
-Team ID: 1
-```
-
-## Dev Login
-
-A temporary local dev login route is available for testing protected pages:
+Use the temporary local dev login:
 
 ```text
 http://127.0.0.1/dev-login
 ```
 
-This route logs in `test@example.com`, sets the Spatie team context to `1`, and redirects to the Activity Logs page.
-
-## Main Routes
+Then view activity logs:
 
 ```text
-/                       Welcome page
-/todos                  Todo index
-/todos/create           Create Todo page
-/todos/{todo}           View Todo page
-/todos/{todo}/edit      Edit Todo page
-/todos/{todo}/delete    Delete Todo page
-/activity-logs          Activity Logs page
-/dev-login              Temporary local test login
+http://127.0.0.1/activity-logs
 ```
 
-## Spatie Roles and Permissions
+## Architecture
 
-The project uses Spatie Laravel Permission with teams enabled.
-
-Roles:
+The project uses Docker Compose to run the Laravel application and supporting services.
 
 ```text
-super admin
-admin
-user
+Browser
+  |
+  v
+Nginx container
+  |
+  v
+PHP-FPM Laravel app container
+  |
+  +--> MySQL container
+  |
+  +--> Redis container
+  |
+  +--> Horizon worker
+  |
+  +--> Reverb websocket server
 ```
 
-Permissions:
+Main application areas:
 
 ```text
-view todos
-create todos
-update todos
-delete todos
-view activity logs
-```
-
-Permission checks use enums:
-
-```php
-$user->can(\App\Enums\PermissionEnum::VIEW_TODOS->value);
-```
-
-When using teams, set the team context:
-
-```php
-setPermissionsTeamId(1);
-```
-
-## Spatie Activity Logs
-
-The `Todo` model logs selected attributes:
-
-```text
-title
-description
-completed
-```
-
-Activity logs track:
-
-- Created events
-- Updated events
-- Deleted events
-- Old and new attribute values
-
-Example Tinker check:
-
-```bash
-docker compose exec app php artisan tinker
-```
-
-```php
-$todo = \App\Models\Todo::create([
-    'title' => 'Original name',
-    'description' => 'Lorem',
-    'completed' => false,
-]);
-
-$todo->update([
-    'title' => 'Updated name',
-    'completed' => true,
-]);
-
-$activity = \Spatie\Activitylog\Models\Activity::where('event', 'updated')->latest()->first();
-
-$activity->attribute_changes->toArray();
-```
-
-Expected result:
-
-```php
-[
-    'old' => [
-        'title' => 'Original name',
-        'completed' => false,
-    ],
-    'attributes' => [
-        'title' => 'Updated name',
-        'completed' => true,
-    ],
-]
+app/Enums                  Role and permission enums
+app/Http/Middleware        Permission team context middleware
+app/Models                 User and Todo models
+config/permission.php      Spatie Permission configuration
+config/activitylog.php     Spatie Activitylog configuration
+database/migrations        Database schema
+database/seeders           User, role, and permission seeders
+resources/views            Blade and Livewire views
+routes/web.php             Web routes and protected pages
 ```
 
 ## Useful Commands
@@ -242,19 +117,25 @@ Stop containers:
 docker compose down
 ```
 
+Rebuild containers:
+
+```bash
+docker compose up -d --build
+```
+
 Run migrations and seeders:
 
 ```bash
 docker compose exec app php artisan migrate:fresh --seed --force
 ```
 
-Clear cache:
+Clear Laravel cache:
 
 ```bash
 docker compose exec app php artisan optimize:clear
 ```
 
-Reset permission cache:
+Reset Spatie permission cache:
 
 ```bash
 docker compose exec app php artisan permission:cache-reset
@@ -278,49 +159,247 @@ Run tests:
 docker compose exec app php artisan test
 ```
 
-## Git Workflow
+Check running containers and ports:
 
-Branch naming standard:
+```bash
+docker compose ps
+```
+
+## How It Was Built (Step by Step)
+
+### 1. Laravel Scaffold
+
+The project started from a fresh Laravel application.
+
+```bash
+composer create-project laravel/laravel
+```
+
+The Laravel app was then prepared for local development using Docker Compose.
+
+### 2. Docker Compose Setup
+
+Docker Compose was configured with the following services:
+
+- `app` for the Laravel PHP-FPM application
+- `nginx` for serving the Laravel public directory
+- `db` for MySQL 8
+- `redis` for Redis
+- `horizon` for Laravel Horizon
+- `reverb` for Laravel Reverb
+
+The main local app URL is:
 
 ```text
-feature/SM-description
-bugfix/SM-description
-hotfix/SM-description
+http://127.0.0.1
 ```
 
-Example branch:
+### 3. Livewire Setup
 
-```bash
-git checkout -b feature/SM-spatie-roles-permissions-activity-logs
-```
+Livewire was added and used for the Todo pages.
 
-Commit naming standard:
+Current Todo routes include:
 
 ```text
-feat: new feature
-fix: bug fix
-chore: config or maintenance
-docs: documentation only
-refactor: code change without feature or bug fix
-test: adding or fixing tests
+/todos
+/todos/create
+/todos/{todo}
+/todos/{todo}/edit
+/todos/{todo}/delete
 ```
 
-Example commit:
+### 4. Database, Migrations, and Seeders
 
-```bash
-git commit -m "feat: add spatie roles permissions and activity logs"
+Database migrations were created for the application tables, including:
+
+- Users
+- Cache
+- Jobs
+- Students
+- Todos
+- Spatie permission tables
+- Spatie activity log table
+
+Seeders were added for:
+
+- Student data
+- Roles and permissions
+- Default test user
+
+### 5. Spatie Roles and Permissions
+
+Spatie Laravel Permission was installed and configured.
+
+Teams were enabled in:
+
+```php
+config/permission.php
 ```
 
-Push branch:
+```php
+'teams' => true,
+```
 
-```bash
-git push -u origin feature/SM-spatie-roles-permissions-activity-logs
+The `User` model was updated to use:
+
+```php
+use Spatie\Permission\Traits\HasRoles;
+```
+
+Roles added:
+
+```text
+super admin
+admin
+user
+```
+
+Permissions added:
+
+```text
+view todos
+create todos
+update todos
+delete todos
+view activity logs
+```
+
+Enums were created for cleaner permission usage:
+
+```text
+app/Enums/RoleEnum.php
+app/Enums/PermissionEnum.php
+```
+
+Example permission check:
+
+```php
+$user->can(\App\Enums\PermissionEnum::VIEW_TODOS->value);
+```
+
+### 6. Permission-Protected Routes
+
+Spatie permission middleware was registered in:
+
+```text
+bootstrap/app.php
+```
+
+Todo and Activity Log routes were protected using permission middleware.
+
+Example:
+
+```php
+->middleware('permission:'.PermissionEnum::VIEW_ACTIVITY_LOGS->value)
+```
+
+### 7. Team Context Middleware
+
+Because Spatie teams are enabled, a middleware was added to set the current permission team context.
+
+File:
+
+```text
+app/Http/Middleware/SetPermissionsTeam.php
+```
+
+It sets the team context from session data and defaults to team `1`.
+
+### 8. Spatie Activity Log Setup
+
+Spatie Laravel Activitylog was installed and configured.
+
+The activity log migration and config were published:
+
+```text
+config/activitylog.php
+database/migrations/*_create_activity_log_table.php
+```
+
+The `Todo` model was configured to log selected attributes.
+
+Logged Todo attributes:
+
+```text
+title
+description
+completed
+```
+
+### 9. Advanced Activity Logging
+
+The `Todo` model tracks old and new values for updates.
+
+Example activity output:
+
+```php
+[
+    'old' => [
+        'title' => 'Original name',
+        'completed' => false,
+    ],
+    'attributes' => [
+        'title' => 'Updated name',
+        'completed' => true,
+    ],
+]
+```
+
+This allows the app to display what changed during create, update, and delete actions.
+
+### 10. Activity Logs Page
+
+An Activity Logs page was added at:
+
+```text
+/activity-logs
+```
+
+This page displays:
+
+- Log description
+- Event type
+- Subject model
+- Old values
+- New values
+
+The route is protected by:
+
+```text
+view activity logs
+```
+
+### 11. Temporary Dev Login
+
+A temporary local dev login route was added for testing protected pages.
+
+```text
+/dev-login
+```
+
+It logs in the seeded test user:
+
+```text
+Email: test@example.com
+Role: super admin
+Team ID: 1
+```
+
+This route is only intended for local development and testing.
+
+## Test User
+
+```text
+Email: test@example.com
+Password: password
+Role: super admin
+Team ID: 1
 ```
 
 ## Notes
 
-- Use `127.0.0.1` for browser testing.
-- `localhost` may point to Apache depending on the local machine setup.
-- The `/dev-login` route is only for local development/testing.
+- Use `http://127.0.0.1` for browser testing.
+- `localhost` may show Apache depending on the local machine setup.
+- The `/dev-login` route is for local development only.
 - Do not commit `.env`.
 - Remove accidental local files before committing.
