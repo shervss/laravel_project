@@ -9,6 +9,47 @@ services:
       - .env
     depends_on:
       - db
+      - redis
+    volumes:
+      - .:/usr/share/nginx/html:delegated
+      - storage-data:/usr/share/nginx/html/storage
+      - cache-data:/usr/share/nginx/html/bootstrap/cache
+
+  horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_horizon
+    restart: unless-stopped
+    command: php artisan horizon
+    environment:
+      IS_WORKER: "true"
+    env_file:
+      - .env
+    depends_on:
+      - app
+      - db
+      - redis
+    volumes:
+      - .:/usr/share/nginx/html:delegated
+      - storage-data:/usr/share/nginx/html/storage
+      - cache-data:/usr/share/nginx/html/bootstrap/cache
+
+  reverb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_reverb
+    restart: unless-stopped
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    env_file:
+      - .env
+    depends_on:
+      - app
+      - db
+      - redis
+    ports:
+      - "8080:8080"
     volumes:
       - .:/usr/share/nginx/html:delegated
       - storage-data:/usr/share/nginx/html/storage
@@ -40,6 +81,14 @@ services:
       MYSQL_ROOT_PASSWORD: root
     volumes:
       - db-data:/var/lib/mysql
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: laravel_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass redis
 
 volumes:
   db-data:
